@@ -43,6 +43,8 @@ h1{font-size:clamp(20px,3vw,28px);font-weight:700;margin:0;text-align:center;tex
 .nav button:hover:not([disabled]){border-color:var(--accent)}
 .nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .nav button[disabled]{opacity:.35;cursor:default}
+.sheets-link{display:inline-block;margin-top:4px;font-size:14px;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--btn);border-radius:8px;padding:8px 14px}
+.sheets-link:hover{border-color:var(--accent)}
 .where{font-variant-numeric:tabular-nums;min-width:150px;text-align:center;color:var(--muted)}
 </style>
 </head>
@@ -54,6 +56,7 @@ h1{font-size:clamp(20px,3vw,28px);font-weight:700;margin:0;text-align:center;tex
   <span class="where" id="where"></span>
   <button id="next" type="button" aria-label="Next page">→</button>
 </div>
+<a class="sheets-link" href="sheets.html">View A4 print sheets</a>
 <script>
 const N = BROCHURE.nombreDePages;
 const src = n => BROCHURE.dossier + String(n).padStart(2, "0") + BROCHURE.extension;
