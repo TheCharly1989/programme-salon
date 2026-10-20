@@ -27,7 +27,7 @@ h1 small{display:block;font-size:15px;font-weight:400;color:var(--muted);margin-
 .back{display:inline-block;margin-bottom:14px;color:var(--accent);text-decoration:none;font-size:14px}
 .back:hover{text-decoration:underline}
 .badge{font-family:var(--mono);font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--surface)}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:22px;align-items:start}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:22px;align-items:start}
 @media (max-width:1000px){.layout{grid-template-columns:minmax(0,1fr)}}
 .sheets{display:flex;flex-direction:column;gap:18px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
@@ -76,7 +76,7 @@ li{margin-bottom:5px}
     <div class="sheets" id="sheets"></div>
     <aside>
       <svg id="nest" role="img" aria-label="How the sheets nest"></svg>
-      <p>Cross-section: sheet 1 wraps around all the others; the last sheet sits in the centre, where the staples go.</p>
+      <p>Cross-section of the folded booklet. Each colour is one A4 sheet (S1 = sheet 1). Bold numbers are on the outside of each leaf, grey numbers on the inside.</p>
     </aside>
   </div>
   <div class="info" id="info" hidden>
@@ -132,17 +132,35 @@ function sheetFace(pair, cfg) {
 }
 
 function nest(S) {
-  const W = 200, gap = Math.min(22, 120 / S), top = 24, H = top + S * gap + 150;
+  const n = 4 * S, W = 270, xL = 74;
+  const HUES = ["#0087bd", "#c8006a", "#d9a400", "#2a9d6f", "#6b4fbb", "#e0602b"];
+  const gap = S <= 5 ? 46 : Math.max(10, 230 / S), nums = gap >= 30, centre = 52, top = 30;
   const cs = getComputedStyle(document.documentElement);
-  const ink = cs.getPropertyValue("--ink"), muted = cs.getPropertyValue("--muted"), mark = cs.getPropertyValue("--mark");
+  const ink = cs.getPropertyValue("--ink").trim(), muted = cs.getPropertyValue("--muted").trim();
+  const mono = 'font-family="ui-monospace,Consolas,monospace"';
+  const innerTop = top + (S - 1) * gap, innerBot = innerTop + centre, H = innerBot + (S - 1) * gap + 44;
+  const foldX = k => W - 34 - k * Math.min(16, gap * .5);
   let s = "";
   for (let k = 0; k < S; k++) {
-    const xL = 70, xR = W - 14 - k * gap * .55, y1 = top + k * gap, y2 = H - 30 - k * gap;
-    s += `<path d="M${xL} ${y1} L${xR - 12} ${y1} Q${xR} ${y1} ${xR} ${(y1 + y2) / 2} Q${xR} ${y2} ${xR - 12} ${y2} L${xL} ${y2}" fill="none" stroke="${k === S - 1 ? mark : ink}" stroke-width="2"/>`;
-    s += `<text x="${xL - 8}" y="${y1 + 4}" text-anchor="end" font-size="12" font-family="ui-monospace,Consolas,monospace" fill="${muted}">S${k + 1}</text>`;
+    const c = HUES[k % HUES.length], y1 = top + k * gap, y2 = innerBot + (S - 1 - k) * gap, xF = foldX(k), r = Math.min(14, (y2 - y1) / 2);
+    s += `<path d="M${xL} ${y1} L${xF - r} ${y1} Q${xF} ${y1} ${xF} ${y1 + r} L${xF} ${y2 - r} Q${xF} ${y2} ${xF - r} ${y2} L${xL} ${y2}" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+    s += `<text x="${xL - 10}" y="${y1 + 4}" text-anchor="end" font-size="12" font-weight="600" ${mono} fill="${c}">S${k + 1}</text>`;
+    s += `<text x="${xL - 10}" y="${y2 + 4}" text-anchor="end" font-size="12" font-weight="600" ${mono} fill="${c}">S${k + 1}</text>`;
+    if (nums) {
+      const x = xL + 14;
+      // top leaf: outside face above the line, inside face below
+      s += `<text x="${x}" y="${y1 - 6}" font-size="11" ${mono} fill="${ink}">p.${2 * k + 1}</text>`;
+      s += `<text x="${x}" y="${y1 + 15}" font-size="11" ${mono} fill="${muted}">p.${2 * k + 2}</text>`;
+      // bottom leaf: inside face above the line, outside face below
+      s += `<text x="${x}" y="${y2 - 6}" font-size="11" ${mono} fill="${muted}">p.${n - 2 * k - 1}</text>`;
+      s += `<text x="${x}" y="${y2 + 15}" font-size="11" ${mono} fill="${ink}">p.${n - 2 * k}</text>`;
+    }
   }
-  const cx = W - 14 - (S - 1) * gap * .55;
-  s += `<text x="${cx - 4}" y="${H - 6}" text-anchor="end" font-size="11" fill="${muted}" font-family="system-ui,sans-serif">fold + staples →</text>`;
+  // staple through every fold
+  const ym = (innerTop + innerBot) / 2, xa = foldX(S - 1) - 8, xb = foldX(0) + 10;
+  s += `<path d="M${xa} ${ym - 5} L${xa} ${ym} L${xb} ${ym} L${xb} ${ym - 5}" fill="none" stroke="${muted}" stroke-width="2.5"/>`;
+  s += `<text x="${xL + 14}" y="${ym + 4}" font-size="11" ${mono} fill="${muted}">centre ${n / 2} | ${n / 2 + 1}</text>`;
+  s += `<text x="${W - 4}" y="${H - 6}" text-anchor="end" font-size="11" fill="${muted}" font-family="system-ui,sans-serif">fold + staple →</text>`;
   const svg = document.getElementById("nest"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = s;
 }
 
