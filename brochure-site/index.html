@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Programme du salon</title>
+<!-- RÉGLAGES : c'est la seule partie à modifier -->
+<script>
+const BROCHURE = {
+  titre: "Programme du salon",   // titre affiché en haut de la page
+  nombreDePages: 12,             // nombre total de pages (multiple de 4)
+  dossier: "pages/",             // dossier contenant les images
+  extension: ".jpg",             // .jpg ou .png
+  // Les fichiers doivent s'appeler 01.jpg, 02.jpg, 03.jpg ...
+};
+</script>
+<style>
+:root{
+  --bg:#e6ebef; --ink:#1a232d; --muted:#5a6876; --line:#c5cfd8; --accent:#0087bd; --btn:#ffffff;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#11161b;--ink:#e2e8ee;--muted:#8c99a6;--line:#2d3741;--accent:#3bb4e4;--btn:#1a2128;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px 16px;min-height:100%}
+h1{font-size:clamp(20px,3vw,28px);font-weight:700;margin:0;text-align:center;text-wrap:balance}
+.book{display:flex;justify-content:center;width:min(100%,calc((100vh - 170px) * 296 / 210),1000px);aspect-ratio:296/210;filter:drop-shadow(0 12px 22px rgba(10,20,30,.25));user-select:none;-webkit-user-select:none;touch-action:pan-y}
+.side{flex:0 0 50%;position:relative;cursor:pointer}
+.side img{display:block;width:100%;height:100%;object-fit:cover;background:#fff}
+.side.empty{cursor:default}
+.side.l::after,.side.r::after{content:"";position:absolute;inset:0;pointer-events:none}
+.side.l::after{background:linear-gradient(to left,rgba(0,0,0,.16),transparent 7%)}
+.side.r::after{background:linear-gradient(to right,rgba(0,0,0,.16),transparent 7%)}
+.side.empty::after{display:none}
+.book.turn{animation:turn .28s ease}
+@keyframes turn{from{opacity:.35;transform:scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.book.turn{animation:none}}
+/* écran étroit : une page à la fois */
+.book.single{width:min(100%,calc((100vh - 170px) * 148 / 210),520px);aspect-ratio:148/210}
+.book.single .side{flex-basis:100%}
+.book.single .side::after{display:none}
+.nav{display:flex;align-items:center;gap:14px}
+.nav button{font:inherit;font-size:15px;background:var(--btn);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer}
+.nav button:hover:not([disabled]){border-color:var(--accent)}
+.nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nav button[disabled]{opacity:.35;cursor:default}
+.where{font-variant-numeric:tabular-nums;min-width:150px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<h1 id="titre"></h1>
+<div class="book" id="book" aria-live="polite"></div>
+<div class="nav">
+  <button id="prev" type="button" aria-label="Page précédente">←</button>
+  <span class="where" id="where"></span>
+  <button id="next" type="button" aria-label="Page suivante">→</button>
+</div>
+<script>
+const N = BROCHURE.nombreDePages;
+const src = n => BROCHURE.dossier + String(n).padStart(2, "0") + BROCHURE.extension;
+document.title = BROCHURE.titre;
+document.getElementById("titre").textContent = BROCHURE.titre;
+
+const book = document.getElementById("book");
+const narrow = matchMedia("(max-width: 640px)");
+let pos = 0; // index de la vue courante
+
+function views() {
+  if (narrow.matches) return Array.from({length: N}, (_, i) => [i + 1]);
+  const v = [[null, 1]];
+  for (let p = 2; p < N; p += 2) v.push([p, p + 1]);
+  v.push([N, null]);
+  return v;
+}
+
+function render(anim) {
+  const v = views();
+  pos = Math.max(0, Math.min(pos, v.length - 1));
+  const cur = v[pos];
+  book.className = "book" + (narrow.matches ? " single" : "");
+  book.innerHTML = "";
+  cur.forEach((num, k) => {
+    const s = document.createElement("div");
+    s.className = "side " + (cur.length === 1 ? "" : k === 0 ? "l" : "r");
+    if (num) {
+      const img = new Image();
+      img.src = src(num); img.alt = "Page " + num; img.draggable = false;
+      s.appendChild(img);
+      s.onclick = () => go(cur.length === 1 ? 1 : (k === 0 ? -1 : 1));
+    } else s.classList.add("empty");
+    book.appendChild(s);
+  });
+  if (anim) { void book.offsetWidth; book.classList.add("turn"); }
+  const last = v.length - 1;
+  document.getElementById("where").textContent =
+    cur.length === 1 ? `Page ${cur[0]} / ${N}` :
+    pos === 0 ? "Couverture" : pos === last ? "4e de couverture" : `Pages ${cur[0]} – ${cur[1]}`;
+  document.getElementById("prev").disabled = pos === 0;
+  document.getElementById("next").disabled = pos === last;
+  // précharge les pages suivantes
+  (v[pos + 1] || []).forEach(n => { if (n) new Image().src = src(n); });
+}
+
+function go(d) {
+  const last = views().length - 1, np = Math.max(0, Math.min(last, pos + d));
+  if (np !== pos) { pos = np; render(true); }
+}
+
+document.getElementById("prev").onclick = () => go(-1);
+document.getElementById("next").onclick = () => go(1);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") go(-1);
+  if (e.key === "ArrowRight") go(1);
+});
+// balayage sur mobile
+let x0 = null;
+book.addEventListener("touchstart", e => x0 = e.touches[0].clientX, {passive: true});
+book.addEventListener("touchend", e => {
+  if (x0 === null) return;
+  const dx = e.changedTouches[0].clientX - x0; x0 = null;
+  if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+});
+// garde la même page en passant d'un mode d'affichage à l'autre
+narrow.addEventListener("change", () => {
+  pos = narrow.matches ? Math.max(0, pos * 2 - 1) : Math.ceil(pos / 2);
+  render(false);
+});
+render(false);
+</script>
+</body>
+</html>
