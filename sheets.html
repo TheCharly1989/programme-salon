@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Print Imposition</title>
+<script>
+// Optional: brochure title shown at the top of the page
+const TITLE = "Trade Show Programme";
+// Pages are detected automatically in pages/ (01.jpg, 02.jpg… or .png)
+</script>
+<style>
+:root{
+  --bg:#e6ebef; --surface:#f6f8fa; --ink:#1a232d; --muted:#5a6876; --line:#c5cfd8;
+  --accent:#0087bd; --mark:#c8006a; --paper:#fff;
+  --shadow:0 1px 2px rgba(20,30,40,.12),0 6px 18px rgba(20,30,40,.10);
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#11161b;--surface:#1a2128;--ink:#e2e8ee;--muted:#8c99a6;--line:#2d3741;--accent:#3bb4e4;--mark:#ff5aa8;--paper:#f4f6f8;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.35);color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:20px}
+h1{margin:0;font-size:clamp(22px,3vw,30px);line-height:1.1}
+h1 small{display:block;font-size:15px;font-weight:400;color:var(--muted);margin-top:6px}
+.badge{font-family:var(--mono);font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:22px;align-items:start}
+@media (max-width:1000px){.layout{grid-template-columns:minmax(0,1fr)}}
+.sheets{display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:12px}
+.head b{font-size:22px}
+.head .pos{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.head .contains{margin-left:auto;font-size:14px}
+.head .contains span{font-family:var(--mono);font-weight:600}
+.faces{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:700px){.faces{grid-template-columns:1fr}}
+.face{display:flex;flex-direction:column;gap:6px;min-width:0}
+.face-lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--muted)}
+.face-lbl em{font-style:normal;font-family:var(--mono);font-size:18px;font-weight:600;color:var(--ink)}
+.a4{position:relative;aspect-ratio:297/210;background:var(--paper);box-shadow:var(--shadow);display:grid;grid-template-columns:1fr 1fr;cursor:zoom-in;border:0;padding:0;width:100%}
+.a4:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.a4 .half{position:relative;overflow:hidden;container-type:inline-size}
+.a4 img{width:100%;height:100%;object-fit:cover;display:block}
+.a4 .missing{position:absolute;inset:6%;border:1px dashed #b7c1ca;display:flex;align-items:center;justify-content:center;color:#8a96a2;font-size:9cqw}
+.a4 .pno{position:absolute;bottom:3cqw;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:8cqw;background:rgba(26,35,45,.82);color:#fff;padding:.5cqw 2.5cqw;border-radius:2px}
+.a4 .fold{position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--mark);pointer-events:none}
+aside{position:sticky;top:16px;display:flex;flex-direction:column;gap:10px}
+aside svg{width:100%;height:auto}
+aside p{margin:0;font-size:13px;color:var(--muted)}
+.info{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:24px}
+@media (max-width:800px){.info{grid-template-columns:1fr}}
+.info h2{font-size:17px;margin:0 0 8px}
+pre{margin:0;font-family:var(--mono);font-size:13px;line-height:1.7;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+ul{margin:0;padding-left:18px}
+li{margin-bottom:5px}
+.status{padding:40px 0;text-align:center;color:var(--muted)}
+.zoom{position:fixed;inset:0;background:rgba(10,14,18,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;z-index:10;cursor:zoom-out}
+.zoom .a4{width:min(100%,calc((100vh - 80px) * 297 / 210));cursor:zoom-out;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.zoom .cap{color:#e2e8ee;font-family:var(--mono);font-size:14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Print Imposition<small>A5 booklet · A4 landscape sheets, printed both sides, saddle-stitched</small></h1>
+    <span class="badge" id="badge">Loading pages…</span>
+  </header>
+  <div class="status" id="status">Loading pages…</div>
+  <div class="layout" id="content" hidden>
+    <div class="sheets" id="sheets"></div>
+    <aside>
+      <svg id="nest" role="img" aria-label="How the sheets nest"></svg>
+      <p>Cross-section: sheet 1 wraps around all the others; the last sheet sits in the centre, where the staples go.</p>
+    </aside>
+  </div>
+  <div class="info" id="info" hidden>
+    <div>
+      <h2>Imposition plan</h2>
+      <pre id="plan"></pre>
+    </div>
+    <div>
+      <h2>Print settings</h2>
+      <ul>
+        <li>A4 paper, <strong>landscape</strong>, scale <strong>100%</strong> (no fit to page).</li>
+        <li>Double-sided, <strong>flip on short edge</strong>. Flipping on the long edge prints the backs upside down.</li>
+        <li>Order: sheet 1 front, sheet 1 back, sheet 2 front…</li>
+        <li>Fold each sheet in half with the front outside, then nest them: last sheet in the centre, sheet 1 outside (cover visible). Staple on the fold.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="zoom" id="zoom" hidden></div>
+
+<script>
+const pad = n => String(n).padStart(2, "0");
+const exists = url => new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = url + "?v=" + Date.now(); });
+
+async function detect() {
+  let ext = null;
+  for (const e of [".jpg", ".png", ".jpeg"]) if (await exists("pages/01" + e)) { ext = e; break; }
+  if (!ext) return null;
+  let n = 0;
+  while (n < 64 && await exists("pages/" + pad(n + 1) + ext)) n++;
+  return { ext, found: n, n: Math.ceil(n / 4) * 4 };
+}
+
+function imposition(n) {
+  const out = [];
+  for (let s = 0; s < n / 4; s++) out.push({ front: [n - 2 * s, 2 * s + 1], back: [2 * s + 2, n - 2 * s - 1] });
+  return out;
+}
+
+function sheetFace(pair, cfg) {
+  const b = document.createElement("button");
+  b.className = "a4"; b.type = "button";
+  b.setAttribute("aria-label", `Enlarge pages ${pair[0]} and ${pair[1]}`);
+  pair.forEach(num => {
+    const h = document.createElement("div"); h.className = "half";
+    if (num <= cfg.found) { const im = new Image(); im.src = "pages/" + pad(num) + cfg.ext; im.alt = "Page " + num; h.appendChild(im); }
+    else h.innerHTML = `<div class="missing">blank</div>`;
+    h.insertAdjacentHTML("beforeend", `<span class="pno">${num}</span>`);
+    b.appendChild(h);
+  });
+  b.insertAdjacentHTML("beforeend", `<div class="fold"></div>`);
+  return b;
+}
+
+function nest(S) {
+  const W = 200, gap = Math.min(22, 120 / S), top = 24, H = top + S * gap + 150;
+  const cs = getComputedStyle(document.documentElement);
+  const ink = cs.getPropertyValue("--ink"), muted = cs.getPropertyValue("--muted"), mark = cs.getPropertyValue("--mark");
+  let s = "";
+  for (let k = 0; k < S; k++) {
+    const xL = 70, xR = W - 14 - k * gap * .55, y1 = top + k * gap, y2 = H - 30 - k * gap;
+    s += `<path d="M${xL} ${y1} L${xR - 12} ${y1} Q${xR} ${y1} ${xR} ${(y1 + y2) / 2} Q${xR} ${y2} ${xR - 12} ${y2} L${xL} ${y2}" fill="none" stroke="${k === S - 1 ? mark : ink}" stroke-width="2"/>`;
+    s += `<text x="${xL - 8}" y="${y1 + 4}" text-anchor="end" font-size="12" font-family="ui-monospace,Consolas,monospace" fill="${muted}">S${k + 1}</text>`;
+  }
+  const cx = W - 14 - (S - 1) * gap * .55;
+  s += `<text x="${cx - 4}" y="${H - 6}" text-anchor="end" font-size="11" fill="${muted}" font-family="system-ui,sans-serif">fold + staples →</text>`;
+  const svg = document.getElementById("nest"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = s;
+}
+
+const zoom = document.getElementById("zoom");
+function openZoom(btn, caption) {
+  zoom.innerHTML = ""; const c = btn.cloneNode(true); c.tabIndex = -1; zoom.appendChild(c);
+  zoom.insertAdjacentHTML("beforeend", `<div class="cap">${caption} · click or Esc to close</div>`);
+  zoom.hidden = false;
+}
+zoom.onclick = () => zoom.hidden = true;
+document.addEventListener("keydown", e => { if (e.key === "Escape") zoom.hidden = true; });
+
+(async () => {
+  if (TITLE) { document.title = "Print Imposition · " + TITLE; document.getElementById("title").firstChild.textContent = TITLE + " · Print imposition"; }
+  const cfg = await detect();
+  const status = document.getElementById("status");
+  if (!cfg) { status.textContent = "No pages found. Expected files named pages/01.jpg, pages/02.jpg…"; document.getElementById("badge").textContent = "No pages"; return; }
+  const imp = imposition(cfg.n), S = imp.length;
+  document.getElementById("badge").textContent = `${cfg.n} A5 pages · ${S} A4 sheet${S > 1 ? "s" : ""}` + (cfg.found < cfg.n ? ` · ${cfg.n - cfg.found} blank` : "");
+  const wrap = document.getElementById("sheets");
+  imp.forEach((sh, k) => {
+    const pos = S === 1 ? "single sheet" : k === 0 ? "outer" : k === S - 1 ? "centre · staples" : "middle";
+    const all = [...sh.front, ...sh.back].sort((a, b) => a - b);
+    const card = document.createElement("section"); card.className = "card";
+    card.innerHTML = `<div class="head"><b>Sheet ${k + 1}</b><span class="pos">${pos}</span><span class="contains">pages <span>${all.join(", ")}</span></span></div>`;
+    const faces = document.createElement("div"); faces.className = "faces";
+    [["Front", sh.front], ["Back", sh.back]].forEach(([name, pair]) => {
+      const f = document.createElement("div"); f.className = "face";
+      f.innerHTML = `<div class="face-lbl"><span>${name}</span><em>${pair[0]} | ${pair[1]}</em></div>`;
+      const a = sheetFace(pair, cfg); a.onclick = () => openZoom(a, `Sheet ${k + 1} · ${name.toLowerCase()} · ${pair[0]} | ${pair[1]}`);
+      f.appendChild(a); faces.appendChild(f);
+    });
+    card.appendChild(faces); wrap.appendChild(card);
+  });
+  document.getElementById("plan").textContent = `${cfg.n}-page A5 booklet · ${S} A4 sheet${S > 1 ? "s" : ""}\n\n` +
+    imp.map((s, k) => `Sheet ${k + 1}  front ${String(s.front[0]).padStart(2)} | ${String(s.front[1]).padEnd(2)}   back ${String(s.back[0]).padStart(2)} | ${s.back[1]}`).join("\n");
+  nest(S);
+  status.hidden = true;
+  document.getElementById("content").hidden = false;
+  document.getElementById("info").hidden = false;
+})();
+</script>
+</body>
+</html>
